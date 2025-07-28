@@ -21,11 +21,19 @@ NS=argocd
 argocd login --core
 kubectl config set-context --current --namespace="$NS"
 
+
+# Add support for Github PR, which do not have a branch name in the git repository
+if [ "$SPARKMEASURE_WORKBRANCH" == "HEAD" ]; then
+    revision=$CIUX_IMAGE_TAG
+else
+    revision="$SPARKMEASURE_WORKBRANCH"
+fi
+
 argocd app create $app_name --dest-server https://kubernetes.default.svc \
     --dest-namespace "$app_name" \
     --repo https://github.com/k8s-school/$app_name \
-    --path e2e/charts/apps --revision "$SPARKMEASURE_WORKBRANCH" \
-    -p spec.source.targetRevision.default="$SPARKMEASURE_WORKBRANCH"
+    --path e2e/charts/apps --revision "$revision" \
+    -p spec.source.targetRevision.default="$revision"
 
 argocd app sync $app_name
 

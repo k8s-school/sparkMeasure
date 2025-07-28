@@ -24,9 +24,14 @@ kubectl config set-context --current --namespace="$NS"
 
 # Add support for Github PR, which do not have a branch name in the git repository
 if [ "$SPARKMEASURE_WORKBRANCH" == "HEAD" ]; then
-    revision=$CIUX_IMAGE_TAG
+    revision="${{ github.head_ref }}"
 else
-    revision="$SPARKMEASURE_WORKBRANCH"
+    revision="${{ github.head_ref }}"
+fi
+
+if [ -z "$revision" ]; then
+    echo "ERROR: revision is not set" 1>&2
+    exit 1
 fi
 
 argocd app create $app_name --dest-server https://kubernetes.default.svc \

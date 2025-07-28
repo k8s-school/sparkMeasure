@@ -1,29 +1,25 @@
-FROM sbtscala/scala-sbt:eclipse-temurin-alpine-17.0.15_6_1.11.3_2.13.16 AS builder
+# ARG scala_version=2.12
+# ARG spark_image_tag=3.5.6-scala2.12-java17-python3-ubuntu
+
+ARG scala_version=2.13
+ARG spark_image_tag=4.0.0-scala2.13-java17-python3-ubuntu
+
 FROM sbtscala/scala-sbt:eclipse-temurin-alpine-17.0.15_6_1.11.3_2.13.16 AS builder
 
-
-# Définir le répertoire de travail
 WORKDIR /app
 
-# Copier les fichiers SBT
 COPY build.sbt ./
 COPY project ./project
-
-# Copier le code source
 COPY src ./src
 
-# Compiler le projet avec Scala 2.13.8
-# ENV SCALA_VERSION=2.13.8
-ENV SCALA_VERSION=2.12.18
+ARG scala_version
+ENV SCALA_VERSION=${scala_version}.8
 
 RUN sbt ++${SCALA_VERSION} package
 
-# Copier uniquement le JAR compilé
+FROM docker.io/library/spark:${spark_image_tag}
 
-
-
-FROM docker.io/library/spark:3.5.6-scala2.12-java17-python3-ubuntu
-
+ARG scala_version
 USER root
 
 # Setup for the Prometheus JMX exporter.
@@ -48,7 +44,7 @@ RUN pip install /opt/src/python
 ADD e2e/rootfs/ /
 
 RUN mkdir -p /opt/spark/jars
-COPY --from=builder /app/target/scala-2.12/*.jar /opt/spark/jars
+COPY --from=builder /app/target/scala-${scala_version}/*.jar /opt/spark/jars
 
 ARG spark_uid=185
 ENV spark_uid=${spark_uid}

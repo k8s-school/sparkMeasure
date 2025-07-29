@@ -23,10 +23,10 @@ kubectl config set-context --current --namespace="$NS"
 
 
 # Add support for Github PR, which do not have a branch name in the git repository
-if [ "$SPARKMEASURE_WORKBRANCH" == "HEAD" ]; then
-    revision="${{ github.head_ref }}"
+if [ "${GITHUB_EVENT_NAME:-}" = "pull_request" ]; then
+  revision="$GITHUB_HEAD_REF"
 else
-    revision="${{ github.head_ref }}"
+  revision="$SPARKMEASURE_WORKBRANCH"
 fi
 
 if [ -z "$revision" ]; then
